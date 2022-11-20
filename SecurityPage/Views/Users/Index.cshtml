@@ -1,0 +1,25 @@
+﻿@{
+    ViewData["Title"] = "Users Page";
+}
+
+<div class="text-center">
+    <h1 class="display-4">Users list</h1>
+    <p></p>
+    <table class="table">
+        <tr>
+            <th>User Id</th>
+            <th>Email</th>
+            <th>Confirmed</th>
+        </tr>
+        @foreach (var user in ViewBag.Users)
+        {
+            <tr>
+                <td>@user.Id</td>
+                <td>@user.Email</td>
+                <td>@user.EmailConfirmed</td>
+            </tr>
+        }
+    </table>
+
+</div>
+
