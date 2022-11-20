@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 25.0.1705.0
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SecurityPage", "SecurityPage\SecurityPage.csproj", "{A958AEC5-CC8A-4A19-9E00-6ACB98BB0946}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{A958AEC5-CC8A-4A19-9E00-6ACB98BB0946}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A958AEC5-CC8A-4A19-9E00-6ACB98BB0946}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A958AEC5-CC8A-4A19-9E00-6ACB98BB0946}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A958AEC5-CC8A-4A19-9E00-6ACB98BB0946}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D45E73ED-5A44-4017-A12F-13F8053DF5C0}
+	EndGlobalSection
+EndGlobal
