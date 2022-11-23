@@ -1,11 +1,36 @@
 ﻿@{
     ViewData["Title"] = "Users Page";
 }
-<h1>Buffered File Upload</h1>
+<h1>Encrypt file</h1>
 <hr />
-<form method="post" enctype="multipart/form-data">
-    <input type="file" name="file" />
-    <button type="submit">Upload File</button>
+<form method="post" enctype="multipart/form-data" asp-controller="Upload" asp-action="Encrypt">
+    <div class="row">
+        <input type="text" name="password" placeholder="Password" />
+    </div>
+    <div class="row">
+        <input type="file" name="file" />
+    </div>
+    <div class="row">
+        <button type="submit">Encrypt File</button>
+    </div>
+</form>
+<br />
+<br />
+<h1>DEcrypt file</h1>
+<hr />
+<form method="post" enctype="multipart/form-data" asp-controller="Upload" asp-action="Decrypt">
+    <div class="row">
+        <input type="text" name="password" placeholder="Password" />
+    </div>
+    <div class="row">
+        <input type="text" name="extension" placeholder="Extension" />
+    </div>
+    <div class="row">
+        <input type="file" name="file" />
+    </div>
+    <div class="row">
+        <button type="submit">Decrypt File</button>
+    </div>
 </form>
 
 @if (ViewBag.Message != null)

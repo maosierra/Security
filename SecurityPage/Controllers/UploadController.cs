@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
+using SecurityPage.Services;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -10,6 +12,13 @@ namespace SecurityPage.Controllers
 {
     public class UploadController : Controller
     {
+        private readonly IAesService aesService;
+
+        public UploadController(IAesService aesService)
+        {
+            this.aesService = aesService;
+        }
+
         // GET: Upload
         public ActionResult Index()
         {
@@ -17,55 +26,60 @@ namespace SecurityPage.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Index(IFormFile file)
+        public async Task<ActionResult> Encrypt([FromForm] FileEncryptForm file)
         {
             try
             {
-                if (await UploadFile(file))
-                {
-                    ViewBag.Message = "File Upload Successful";
-                }
-                else
-                {
-                    ViewBag.Message = "File Upload Failed";
-                }
+                ViewBag.Message = "File Upload Successful1234567890";
+                var fileName = file.File.FileName.Split('.')[0] ?? "aes";
+                return new FileStreamResult(await EncriptFile(file), "application/octet-stream") { FileDownloadName = $"{fileName}.aes" };
             }
             catch (Exception ex)
             {
                 //Log ex
                 ViewBag.Message = "File Upload Failed";
             }
-            return View();
+            return View("~/Views/Upload/Index.cshtml");
         }
 
-        public async Task<bool> UploadFile(IFormFile file)
+        [HttpPost]
+        public async Task<ActionResult> Decrypt([FromForm] FileEncryptForm file)
         {
-            string path = "";
             try
             {
-                if (file.Length > 0)
-                {
-                    path = Path.GetFullPath(Path.Combine(Environment.CurrentDirectory, "UploadedFiles"));
-                    if (!Directory.Exists(path))
-                    {
-                        Directory.CreateDirectory(path);
-                    }
-                    using (var fileStream = new FileStream(Path.Combine(path, file.FileName), FileMode.Create))
-                    {
-                        await file.CopyToAsync(fileStream);
-                    }
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
+                ViewBag.Message = "File Upload Successful1234567890";
+                var fileName = file.File.FileName.Split('.')[0] ?? "aes";
+                return new FileStreamResult(await DecriptFile(file), "application/octet-stream") { FileDownloadName = $"{fileName}.{file.Extension}" };
             }
             catch (Exception ex)
             {
-                throw new Exception("File Copy Failed", ex);
+                //Log ex
+                ViewBag.Message = "File Upload Failed";
             }
+            return View("~/Views/Upload/Index.cshtml");
         }
+
+        public class FileEncryptForm
+        {
+            public IFormFile File { get; set; }
+            public string Password { get; set; }
+            public string Extension { get; set; }
+        }
+
+        private async Task<MemoryStream> EncriptFile(FileEncryptForm file)
+        {
+            using var memory = new MemoryStream();
+            await file.File.CopyToAsync(memory);
+            return aesService.FileEncrypt(memory, Encoding.ASCII.GetBytes(file.Password));
+        }
+
+        private async Task<MemoryStream> DecriptFile(FileEncryptForm file)
+        {
+            using var memory = new MemoryStream();
+            await file.File.CopyToAsync(memory);
+            return aesService.FileDecrypt(memory, Encoding.ASCII.GetBytes(file.Password));
+        }
+
     }
 }
 
