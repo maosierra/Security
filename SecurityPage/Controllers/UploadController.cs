@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using SecurityPage.Services;
 
 // For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
 
@@ -12,13 +12,6 @@ namespace SecurityPage.Controllers
 {
     public class UploadController : Controller
     {
-        private readonly IAesService aesService;
-
-        public UploadController(IAesService aesService)
-        {
-            this.aesService = aesService;
-        }
-
         // GET: Upload
         public ActionResult Index()
         {
@@ -26,37 +19,63 @@ namespace SecurityPage.Controllers
         }
 
         [HttpPost]
-        public async Task<ActionResult> Encrypt([FromForm] FileEncryptForm file)
+        public async Task<ActionResult> Encrypt([FromForm] FileEncryptForm fileForm)
         {
             try
             {
-                ViewBag.Message = "File Upload Successful1234567890";
-                var fileName = file.File.FileName.Split('.')[0] ?? "aes";
-                return new FileStreamResult(await EncriptFile(file), "application/octet-stream") { FileDownloadName = $"{fileName}.aes" };
+                var fileNameSplit = fileForm.File.FileName.Split('.');
+                if (fileNameSplit[fileNameSplit.Length - 1] != "txt")
+                {
+                    ViewBag.Message = "Only txt files allowed!";
+                    return View("~/Views/Upload/Index.cshtml");
+                }
+
+                if (fileForm.Password.Length != 16)
+                {
+                    ViewBag.Message = "Password length should be 16 characters";
+                    return View("~/Views/Upload/Index.cshtml");
+                }
+
+                var fileName = fileNameSplit[0];
+                var fileContent = await ReadAsStringAsync(fileForm.File);
+                var fileContentEncrypt = EncryptString(fileContent, fileForm.Password);
+                return new FileStreamResult(GenerateStreamFromString(fileContentEncrypt), "text/plain") { FileDownloadName = $"{fileName}.txt" };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                //Log ex
                 ViewBag.Message = "File Upload Failed";
+                return View("~/Views/Upload/Index.cshtml");
             }
-            return View("~/Views/Upload/Index.cshtml");
         }
 
         [HttpPost]
-        public async Task<ActionResult> Decrypt([FromForm] FileEncryptForm file)
+        public async Task<ActionResult> Decrypt([FromForm] FileEncryptForm fileForm)
         {
             try
             {
-                ViewBag.Message = "File Upload Successful1234567890";
-                var fileName = file.File.FileName.Split('.')[0] ?? "aes";
-                return new FileStreamResult(await DecriptFile(file), "application/octet-stream") { FileDownloadName = $"{fileName}.{file.Extension}" };
+                var fileNameSplit = fileForm.File.FileName.Split('.');
+                if (fileNameSplit[fileNameSplit.Length - 1] != "txt")
+                {
+                    ViewBag.Message = "Only txt files allowed!";
+                    return View("~/Views/Upload/Index.cshtml");
+                }
+
+                if (fileForm.Password.Length != 16)
+                {
+                    ViewBag.Message = "Password length should be 16 characters";
+                    return View("~/Views/Upload/Index.cshtml");
+                }
+
+                var fileName = fileNameSplit[0];
+                var fileContentEncrypt = await ReadAsStringAsync(fileForm.File);
+                var fileContentDecrypt = DecryptString(fileContentEncrypt, fileForm.Password);
+                return new FileStreamResult(GenerateStreamFromString(fileContentDecrypt), "text/plain") { FileDownloadName = $"{fileName}.txt" };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                //Log ex
                 ViewBag.Message = "File Upload Failed";
+                return View("~/Views/Upload/Index.cshtml");
             }
-            return View("~/Views/Upload/Index.cshtml");
         }
 
         public class FileEncryptForm
@@ -66,20 +85,89 @@ namespace SecurityPage.Controllers
             public string Extension { get; set; }
         }
 
-        private async Task<MemoryStream> EncriptFile(FileEncryptForm file)
+        private async Task<string> ReadAsStringAsync(IFormFile file)
         {
-            using var memory = new MemoryStream();
-            await file.File.CopyToAsync(memory);
-            return aesService.FileEncrypt(memory, Encoding.ASCII.GetBytes(file.Password));
+            var result = new StringBuilder();
+            using (var reader = new StreamReader(file.OpenReadStream()))
+            {
+                while (reader.Peek() >= 0)
+                    result.AppendLine(await reader.ReadLineAsync());
+            }
+            return result.ToString();
         }
 
-        private async Task<MemoryStream> DecriptFile(FileEncryptForm file)
+        private Stream GenerateStreamFromString(string s)
         {
-            using var memory = new MemoryStream();
-            await file.File.CopyToAsync(memory);
-            return aesService.FileDecrypt(memory, Encoding.ASCII.GetBytes(file.Password));
+            var stream = new MemoryStream();
+            var writer = new StreamWriter(stream);
+            writer.Write(s);
+            writer.Flush();
+            stream.Position = 0;
+            return stream;
         }
 
+        private string EncryptString(string text, string keyString)
+        {
+            var key = Encoding.UTF8.GetBytes(keyString);
+
+            using (var aesAlg = Aes.Create())
+            {
+                using (var encryptor = aesAlg.CreateEncryptor(key, aesAlg.IV))
+                {
+                    using (var msEncrypt = new MemoryStream())
+                    {
+                        using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
+                        using (var swEncrypt = new StreamWriter(csEncrypt))
+                        {
+                            swEncrypt.Write(text);
+                        }
+
+                        var iv = aesAlg.IV;
+
+                        var decryptedContent = msEncrypt.ToArray();
+
+                        var result = new byte[iv.Length + decryptedContent.Length];
+
+                        Buffer.BlockCopy(iv, 0, result, 0, iv.Length);
+                        Buffer.BlockCopy(decryptedContent, 0, result, iv.Length, decryptedContent.Length);
+
+                        return Convert.ToBase64String(result);
+                    }
+                }
+            }
+        }
+
+        private string DecryptString(string cipherText, string keyString)
+        {
+            var fullCipher = Convert.FromBase64String(cipherText);
+
+            var iv = new byte[16];
+            var cipher = new byte[16];
+
+            Buffer.BlockCopy(fullCipher, 0, iv, 0, iv.Length);
+            Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, iv.Length);
+            var key = Encoding.UTF8.GetBytes(keyString);
+
+            using (var aesAlg = Aes.Create())
+            {
+                using (var decryptor = aesAlg.CreateDecryptor(key, iv))
+                {
+                    string result;
+                    using (var msDecrypt = new MemoryStream(cipher))
+                    {
+                        using (var csDecrypt = new CryptoStream(msDecrypt, decryptor, CryptoStreamMode.Read))
+                        {
+                            using (var srDecrypt = new StreamReader(csDecrypt))
+                            {
+                                result = srDecrypt.ReadToEnd();
+                            }
+                        }
+                    }
+
+                    return result;
+                }
+            }
+        }
     }
 }
 

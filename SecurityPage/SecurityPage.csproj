@@ -13,9 +13,7 @@
     <None Remove="Microsoft.VisualStudio.Web.CodeGeneration.Design" />
     <None Remove="Microsoft.EntityFrameworkCore.SqlServer" />
     <None Remove="Views\Users\" />
-    <None Remove="UploadedFiles\" />
     <None Remove="Views\Upload\" />
-    <None Remove="Services\" />
   </ItemGroup>
   <ItemGroup>
     <None Update="app.db" CopyToOutputDirectory="PreserveNewest" ExcludeFromSingleFile="true" />
@@ -33,8 +31,6 @@
 
   <ItemGroup>
     <Folder Include="Views\Users\" />
-    <Folder Include="UploadedFiles\" />
     <Folder Include="Views\Upload\" />
-    <Folder Include="Services\" />
   </ItemGroup>
 </Project>

@@ -10,6 +10,7 @@
             <th>User Id</th>
             <th>Email</th>
             <th>Confirmed</th>
+            <th>Password hash</th>
         </tr>
         @foreach (var user in ViewBag.Users)
         {
@@ -17,6 +18,7 @@
                 <td>@user.Id</td>
                 <td>@user.Email</td>
                 <td>@user.EmailConfirmed</td>
+                <td>@user.PasswordHash</td>
             </tr>
         }
     </table>
