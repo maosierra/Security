@@ -114,6 +114,7 @@ namespace SecurityPage.Controllers
             {
                 using (var encryptor = aesAlg.CreateEncryptor(key, aesAlg.IV))
                 {
+                    aesAlg.Padding = PaddingMode.None;
                     using (var msEncrypt = new MemoryStream())
                     {
                         using (var csEncrypt = new CryptoStream(msEncrypt, encryptor, CryptoStreamMode.Write))
@@ -142,14 +143,18 @@ namespace SecurityPage.Controllers
             var fullCipher = Convert.FromBase64String(cipherText);
 
             var iv = new byte[16];
-            var cipher = new byte[16];
+            //var cipher = new byte[16];
+            var cipher = new byte[fullCipher.Length - iv.Length];
+
 
             Buffer.BlockCopy(fullCipher, 0, iv, 0, iv.Length);
-            Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, iv.Length);
+            //Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, iv.Length);
+            Buffer.BlockCopy(fullCipher, iv.Length, cipher, 0, fullCipher.Length - iv.Length);
             var key = Encoding.UTF8.GetBytes(keyString);
 
             using (var aesAlg = Aes.Create())
             {
+                aesAlg.Padding= PaddingMode.None;
                 using (var decryptor = aesAlg.CreateDecryptor(key, iv))
                 {
                     string result;
